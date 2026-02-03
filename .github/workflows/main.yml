@@ -1,0 +1,22 @@
+name: Ceph Image Sync
+on: workflow_dispatch 
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Aliyun
+        run: |
+          # 修正点：这里的登录地址必须改为上海 shanghai，与你的仓库地址匹配
+          echo "${{ secrets.ALI_PASSWORD }}" | docker login --username=${{ secrets.ALI_USERNAME }} registry.cn-shanghai.aliyuncs.com
+      
+      - name: Sync Image
+        run: |
+          # 1. 直接拉取官方纯正镜像
+          docker pull quay.io/ceph/ceph:v17.2.5
+          
+          # 2. 标记为你自己的上海私有仓库地址
+          docker tag quay.io/ceph/ceph:v17.2.5 registry.cn-shanghai.aliyuncs.com/storage-stack/ceph:v17.2.5
+          
+          # 3. 执行推送
+          docker push registry.cn-shanghai.aliyuncs.com/storage-stack/ceph:v17.2.5
