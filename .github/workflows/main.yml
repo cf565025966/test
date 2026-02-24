@@ -1,5 +1,15 @@
-name: Ceph Image Sync
-on: workflow_dispatch 
+name: Docker Image Sync Tool
+on:
+  workflow_dispatch:
+    inputs:
+      source_image:
+        description: '源镜像地址 (例如: amruthpillai/reactive-resume:latest)'
+        required: true
+        default: 'amruthpillai/reactive-resume:latest'
+      target_tag:
+        description: '阿里云仓库标签 (例如: reactive-resume:latest)'
+        required: true
+        default: 'reactive-resume:latest'
 
 jobs:
   sync:
@@ -7,16 +17,16 @@ jobs:
     steps:
       - name: Login to Aliyun
         run: |
-          # 修正点：这里的登录地址必须改为上海 shanghai，与你的仓库地址匹配
           echo "${{ secrets.ALI_PASSWORD }}" | docker login registry.cn-shanghai.aliyuncs.com --username ${{ secrets.ALI_USERNAME }} --password-stdin
       
       - name: Sync Image
         run: |
-          # 1. 直接拉取官方纯正镜像
-          docker pull quay.io/ceph/ceph:v17.2.5
+          # 使用输入的变量
+          SOURCE=${{ github.event.inputs.source_image }}
+          TARGET=registry.cn-shanghai.aliyuncs.com/storage-stack/${{ github.event.inputs.target_tag }}
           
-          # 2. 标记为你自己的上海私有仓库地址
-          docker tag quay.io/ceph/ceph:v17.2.5 registry.cn-shanghai.aliyuncs.com/storage-stack/ceph:v17.2.5
+          echo "正在同步: $SOURCE -> $TARGET"
           
-          # 3. 执行推送
-          docker push registry.cn-shanghai.aliyuncs.com/storage-stack/ceph:v17.2.5
+          docker pull $SOURCE
+          docker tag $SOURCE $TARGET
+          docker push $TARGET
